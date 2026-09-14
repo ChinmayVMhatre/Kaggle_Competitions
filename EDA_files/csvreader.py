@@ -180,76 +180,76 @@ class CSVDataset:
 
         return self
 
-  def replace_nan(
-        self,
-        value=None,
-        numeric_strategy: str = "median",
-        columns: Optional[Iterable[str]] = None,
-        report: bool = False,
-    ) -> "CSVDataset":
-        """Replace all NaN / missing values in one call.
- 
-        This is the "just clean everything" shortcut. Unlike ``fill_missing``,
-        which applies a single strategy, this handles numeric and string
-        columns together in a single pass.
- 
-        Two modes:
- 
-        1. Blanket replace -- pass a ``value`` and every NaN across the
-           selected columns becomes that value.
-               ds.replace_nan(0)
-               ds.replace_nan("unknown")
- 
-        2. Type-aware replace (default, when ``value`` is None) --
-           numeric columns are filled with their mean/median (set by
-           ``numeric_strategy``), and string/categorical columns are filled
-           with their most frequent value (mode).
-               ds.replace_nan()                          # median + mode
-               ds.replace_nan(numeric_strategy="mean")   # mean + mode
- 
-        Parameters
-        ----------
-        value :
-            If given, use this single value for every NaN (mode 1).
-        numeric_strategy : {'mean', 'median'}
-            How to fill numeric columns in type-aware mode.
-        columns : iterable of str, optional
-            Limit the replacement to these columns. Defaults to all.
-        report : bool
-            If True, print how many NaNs were replaced per column.
- 
-        Returns ``self`` so it can be chained.
-        """
-        cols = list(columns) if columns is not None else self.df.columns.tolist()
-        before = self.df[cols].isna().sum()
- 
-        if value is not None:
-            # Mode 1: blanket replacement with one fixed value.
-            self.df[cols] = self.df[cols].fillna(value)
-        else:
-            # Mode 2: type-aware replacement.
-            if numeric_strategy not in ("mean", "median"):
-                raise ValueError("numeric_strategy must be 'mean' or 'median'.")
-            for col in cols:
-                if self.df[col].isna().sum() == 0:
-                    continue
-                if pd.api.types.is_numeric_dtype(self.df[col]):
-                    fill = getattr(self.df[col], numeric_strategy)()
-                else:
-                    mode = self.df[col].mode(dropna=True)
-                    fill = mode.iloc[0] if not mode.empty else value
-                self.df[col] = self.df[col].fillna(fill)
- 
-        if report:
-            replaced = before[before > 0]
-            if replaced.empty:
-                print("replace_nan: nothing to replace.")
+      def replace_nan(
+            self,
+            value=None,
+            numeric_strategy: str = "median",
+            columns: Optional[Iterable[str]] = None,
+            report: bool = False,
+        ) -> "CSVDataset":
+            """Replace all NaN / missing values in one call.
+     
+            This is the "just clean everything" shortcut. Unlike ``fill_missing``,
+            which applies a single strategy, this handles numeric and string
+            columns together in a single pass.
+     
+            Two modes:
+     
+            1. Blanket replace -- pass a ``value`` and every NaN across the
+               selected columns becomes that value.
+                   ds.replace_nan(0)
+                   ds.replace_nan("unknown")
+     
+            2. Type-aware replace (default, when ``value`` is None) --
+               numeric columns are filled with their mean/median (set by
+               ``numeric_strategy``), and string/categorical columns are filled
+               with their most frequent value (mode).
+                   ds.replace_nan()                          # median + mode
+                   ds.replace_nan(numeric_strategy="mean")   # mean + mode
+     
+            Parameters
+            ----------
+            value :
+                If given, use this single value for every NaN (mode 1).
+            numeric_strategy : {'mean', 'median'}
+                How to fill numeric columns in type-aware mode.
+            columns : iterable of str, optional
+                Limit the replacement to these columns. Defaults to all.
+            report : bool
+                If True, print how many NaNs were replaced per column.
+     
+            Returns ``self`` so it can be chained.
+            """
+            cols = list(columns) if columns is not None else self.df.columns.tolist()
+            before = self.df[cols].isna().sum()
+     
+            if value is not None:
+                # Mode 1: blanket replacement with one fixed value.
+                self.df[cols] = self.df[cols].fillna(value)
             else:
-                print("replace_nan: values replaced per column")
-                for col, n in replaced.items():
-                    print(f"  {col}: {int(n)}")
- 
-        return self
+                # Mode 2: type-aware replacement.
+                if numeric_strategy not in ("mean", "median"):
+                    raise ValueError("numeric_strategy must be 'mean' or 'median'.")
+                for col in cols:
+                    if self.df[col].isna().sum() == 0:
+                        continue
+                    if pd.api.types.is_numeric_dtype(self.df[col]):
+                        fill = getattr(self.df[col], numeric_strategy)()
+                    else:
+                        mode = self.df[col].mode(dropna=True)
+                        fill = mode.iloc[0] if not mode.empty else value
+                    self.df[col] = self.df[col].fillna(fill)
+     
+            if report:
+                replaced = before[before > 0]
+                if replaced.empty:
+                    print("replace_nan: nothing to replace.")
+                else:
+                    print("replace_nan: values replaced per column")
+                    for col, n in replaced.items():
+                        print(f"  {col}: {int(n)}")
+     
+            return self
 
     # ------------------------------------------------------------------ #
     # CATEGORICAL VARIABLE HANDLING
